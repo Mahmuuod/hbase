@@ -1,0 +1,305 @@
+  services:
+    master1:
+      build:
+        context: .
+        target: hadoop
+      hostname: master1
+      container_name: master1
+
+      deploy:
+        resources:
+          limits:
+            cpus: "1.0"        
+            memory: 1024M      
+          reservations:
+            cpus: "0.5"        
+            memory: 512M  
+      ports:  
+        - "8004:9870"  #UI
+        - "8003:8088"  #UI
+      volumes:
+        - ./data/:/data/
+        - ./code/:/code/
+        - nn1:/opt/hadoop/name
+      networks:
+        - hadoop_cluster  
+      healthcheck:
+        test: ["CMD", "nc", "-z", "master1", "9870"]
+        interval: 10s
+        timeout: 5s
+        retries: 7
+      restart: always
+    master2:
+      build:
+        context: .
+        target: hadoop
+      hostname: master2
+      container_name: master2
+      deploy:
+        resources:
+          limits:
+            cpus: "1.0"        
+            memory: 1024M     
+          reservations:
+            cpus: "0.5"        
+            memory: 512M  
+      volumes:
+        - ./data/:/data/
+        - ./code/:/code/
+        - nn2:/opt/hadoop/name
+      ports:
+          - "8002:9870"
+          - "8001:8088"
+      networks:
+        - hadoop_cluster
+      healthcheck:
+        test: ["CMD", "nc", "-z", "master2", "9870"]
+        interval: 10s
+        timeout: 10s
+        retries: 10
+      restart: always
+
+    worker1:
+      build:
+        context: .
+        target: hbase
+      hostname: worker1
+      container_name: worker1
+
+      deploy:
+        resources:
+          limits:
+            cpus: "1.0"        
+            memory: 1024M      
+          reservations:
+            cpus: "0.5"        
+            memory: 512M  
+      volumes:
+        - ./data/:/data/
+        - ./code/:/code/
+        - sn1:/opt/hadoop/data
+      networks:
+        - hadoop_cluster
+      healthcheck:
+        test: ["CMD", "nc", "-z", "worker1", "9866"]
+        interval: 10s
+        timeout: 10s
+        retries: 10
+      restart: always
+      depends_on:
+        master1:
+          condition: service_healthy
+        master2:
+          condition: service_healthy
+
+    worker2:
+      build:
+        context: .
+        target: hbase
+      hostname: worker2
+      container_name: worker2
+      deploy:
+        resources:
+          limits:
+            cpus: "1.0"        
+            memory: 1024M      
+          reservations:
+            cpus: "0.5"        
+            memory: 512M  
+      volumes:
+        - ./data/:/data/
+        - ./code/:/code/
+        - sn1:/opt/hadoop/data
+      networks:
+        - hadoop_cluster
+      healthcheck:
+        test: ["CMD", "nc", "-z", "worker2", "9866"]
+        interval: 10s
+        timeout: 5s
+        retries: 7
+      restart: always
+      depends_on:
+        master1:
+          condition: service_healthy
+        master2:
+          condition: service_healthy
+
+      
+    zk1:
+      build:
+        context: .
+        target: hadoop
+      hostname: zk1
+      container_name: zk1
+      deploy:
+        resources:
+          limits:
+            cpus: "1.0"        
+            memory: 1024M     
+          reservations:
+            cpus: "0.5"        
+            memory: 512M  
+      volumes:
+        - ./data/:/data/
+        - ./code/:/code/
+        - zk1:/opt/zookeeper/data
+      ports:
+        - "2182:2181"      # ZooKeeper client port
+        - "2889:2888"      # quorum port
+        - "3889:3888"      # leader election port
+      networks:
+        - hadoop_cluster
+      healthcheck:
+        test: ["CMD", "nc", "-z", "localhost", "2181"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+    zk2:
+      build:
+        context: .
+        target: hadoop
+      hostname: zk2
+      container_name: zk2
+      deploy:
+        resources:
+          limits:
+            cpus: "1.0"        
+            memory: 1024M     
+          reservations:
+            cpus: "0.5"        
+            memory: 512M  
+      volumes:
+        - ./data/:/data/
+        - ./code/:/code/
+        - zk2:/opt/zookeeper/data
+      ports:
+        - "2181:2181"      # ZooKeeper client port
+        - "2888:2888"      # quorum port
+        - "3888:3888"      # leader election port
+      networks:
+        - hadoop_cluster
+      healthcheck:
+        test: ["CMD", "nc", "-z", "localhost", "2181"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+    zk3:
+      build:
+        context: .
+        target: hadoop
+      hostname: zk3
+      container_name: zk3
+      deploy:
+        resources:
+          limits:
+            cpus: "1.0"        
+            memory: 1024M     
+          reservations:
+            cpus: "0.5"        
+            memory: 512M  
+      volumes:
+        - ./data/:/data/
+        - ./code/:/code/
+        - zk3:/opt/zookeeper/data
+      ports:
+        - "2183:2181"      # ZooKeeper client port
+        - "2890:2888"      # quorum port
+        - "3890:3888"      # leader election port
+      networks:
+        - hadoop_cluster
+      healthcheck:
+        test: ["CMD", "nc", "-z", "localhost", "2181"]
+        interval: 10s
+        timeout: 5s
+        retries: 5
+
+    hmaster1:
+          build:
+            context: .
+            target: hbase
+          hostname: hmaster1
+          container_name: hmaster1
+          ports:
+            - "16000:16000"   # HBase Master RPC
+            - "16010:16010"   # HBase Master web UI
+          volumes:
+            - ./data/:/data/
+            - ./code/:/code/
+          networks:
+              - hadoop_cluster
+          healthcheck:
+            test: ["CMD", "nc", "-z", "localhost", "16010"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+          depends_on:
+            master1:
+              condition: service_healthy
+            master2:
+              condition: service_healthy
+    hmaster2:
+          build:
+            context: .
+            target: hbase
+          hostname: hmaster2
+          container_name: hmaster2
+          ports:
+            - "16001:16000"   # HBase Master RPC
+            - "16011:16010"   # HBase Master web UI
+          volumes:
+            - ./data/:/data/
+            - ./code/:/code/
+          networks:
+            - hadoop_cluster
+          healthcheck:
+            test: ["CMD", "nc", "-z", "localhost", "16010"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+          depends_on:
+            master1:
+              condition: service_healthy
+            master2:
+              condition: service_healthy
+
+    hmaster3:
+          build:
+            context: .
+            target: hbase
+          hostname: hmaster3
+          container_name: hmaster3
+          ports:
+            - "16002:16000"   # HBase Master RPC
+            - "16012:16010"   # HBase Master web UI
+          volumes:
+            - ./data/:/data/
+            - ./code/:/code/
+          networks:
+            - hadoop_cluster
+          healthcheck:
+            test: ["CMD", "nc", "-z", "localhost", "16010"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+          depends_on:
+            master1:
+              condition: service_healthy
+            master2:
+              condition: service_healthy
+
+  networks:
+    hadoop_cluster:
+      driver: bridge
+  volumes:
+    jn1:
+    nn1:
+    zk1:
+    jn2:
+    nn2:
+    zk2:
+    zk3:
+    sn1:
+    
+    
