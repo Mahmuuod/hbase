@@ -8,12 +8,17 @@ This project demonstrates the design, deployment, and usage of a **Highly Availa
 
 ## Architecture & Cluster Setup
 
-- **Masters:**
-  - HBase Master node(s) with active/standby failover
+- **Hadoop Masters:**
+
   - Hadoop NameNode(s) with JournalNodes for HDFS HA
   - YARN ResourceManager(s) with HA
-  - ZooKeeper ensemble (3 nodes)
+ 
+ - **Hbase Masters:** 
+  - HBase Master node(s) with active/standby failover (2)
 
+- **Zookeeper Nodes:**
+  - ZooKeeper ensemble (3 nodes)
+ 
 - **Workers:**
   - HBase RegionServers
   - Hadoop DataNodes
@@ -21,7 +26,7 @@ This project demonstrates the design, deployment, and usage of a **Highly Availa
 
 - **Containerization:**
   - Custom Docker image including Hadoop 3.3.6, Zookeeper 3.8.4, HBase 2.5.11
-  - Docker Compose orchestrates multi-container HA cluster deployment
+  - Docker Compose orchestrates a multi-container HA cluster deployment
 
 ---
 
