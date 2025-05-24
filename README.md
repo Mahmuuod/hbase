@@ -119,6 +119,64 @@ Uses the same bootstrap script: `hadoop_script.sh`
 - SSH setup allows container-to-container remote command execution.
 
 ---
+# 🚀 Hadoop + HBase Cluster Bootstrap Script (`hadoop_script.sh`)
+
+This startup script dynamically initializes Hadoop, HBase, Zookeeper, and YARN services inside each Docker container based on the node’s hostname. It distinguishes between first-time setup and subsequent reboots, ensuring proper sequencing and failover support in a high-availability (HA) architecture.
+
+---
+
+## 🧠 Logic Overview
+
+- Detects the node type using `hostname`
+- Extracts node index from the name (e.g., master1 → ID 1)
+- Starts SSH service for inter-container communication
+- Handles both initial cluster formatting and regular service startup
+
+---
+
+## 🧱 Role-Based Behavior
+
+### 🟩 `master*`
+- Starts `journalnode` and waits for readiness
+- If `master1`, it:
+  - Formats NameNode and ZKFC
+  - Starts NameNode, ZKFC, ResourceManager
+- If `master2/3`, it:
+  - Waits for Master1 to finish formatting
+  - Bootstraps standby NameNode
+  - Starts NameNode, ZKFC, ResourceManager
+
+### 🟨 `worker*`
+- Starts DataNode, NodeManager
+- Starts HBase RegionServer
+
+### 🟦 `zk*`
+- Writes ZooKeeper `myid` based on `NodeID`
+- Starts Zookeeper Server (`zkServer.sh`)
+
+### 🟥 `hmaster*`
+- Ensures `/hbase` exists in HDFS
+- Starts HBase Master service
+
+---
+
+## 🔁 Regular Startup
+
+If `/opt/hadoop/name/current` exists, the script assumes prior formatting and directly starts:
+
+- For `master*`: JournalNode, NameNode, ZKFC, ResourceManager
+- For `worker*`: DataNode, NodeManager, RegionServer
+- For `zk*`: Zookeeper Server
+- For `hmaster*`: HBase Master
+
+---
+
+## 🧷 Cluster Safety
+
+- Uses `nc -z` to wait for dependent services before proceeding
+- Keeps containers alive with `tail -f /dev/null`
+
+---
 ---
 ## Compose
 ---
