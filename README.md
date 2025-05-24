@@ -27,7 +27,98 @@ This project demonstrates the design, deployment, and usage of a **Highly Availa
 - **Containerization:**
   - Custom Docker image including Hadoop 3.3.6, Zookeeper 3.8.4, HBase 2.5.11
   - Docker Compose orchestrates a multi-container HA cluster deployment
+---
 
+# 🐳 Dockerfile Documentation: Hadoop + Zookeeper + HBase Cluster
+
+This multi-stage Dockerfile builds two images:
+1. A base image with **Hadoop 3.3.6** and **Zookeeper 3.8.4**
+2. An extended image with **HBase 2.5.11**
+
+It is optimized for setting up a high-availability Hadoop + HBase cluster using Docker and Docker Compose.
+
+---
+
+## 🧱 Stage 1: Base Hadoop Image (`hadoop`)
+
+### Base OS
+```dockerfile
+FROM ubuntu:22.04 AS hadoop
+```
+
+### Installed Tools and Dependencies
+- `openjdk-8-jdk` for Hadoop and HBase compatibility
+- SSH (`ssh`, `sshpass`) for intra-cluster communication
+- Network utilities (`netcat`, `net-tools`)
+- System tools (`sudo`, `vim`, `wget`, `tar`)
+
+### Hadoop Installation
+```bash
+wget https://dlcdn.apache.org/hadoop/common/hadoop-3.3.6/hadoop-3.3.6.tar.gz
+```
+- Extracted into `/opt/hadoop-3.3.6`
+
+### Zookeeper Installation
+```bash
+wget https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz
+```
+- Extracted to `/opt/zookeeper/zookeeper`
+
+### Hadoop User Setup
+- Creates `hadoop` user with `sudo` privileges
+- Password: `123`
+- SSH key generation for passwordless login
+
+### Configuration Files
+```dockerfile
+COPY ./data/configs/hadoop/* → /opt/hadoop-3.3.6/etc/hadoop/
+COPY ./data/configs/zoo.cfg → /opt/zookeeper/zookeeper/conf/
+COPY ./code/hadoop_script.sh → /home/hadoop/code/
+```
+
+### Environment Variables
+```dockerfile
+JAVA_HOME, HADOOP_HOME, HADOOP_CONF_DIR, ZOOKEEPER_HOME
+```
+
+### Entrypoint
+```bash
+ENTRYPOINT ["/bin/bash", "-c", " /home/hadoop/code/hadoop_script.sh"]
+```
+
+---
+
+## 🧪 Stage 2: Extended HBase Image (`hbase`)
+
+```dockerfile
+FROM hadoop AS hbase
+```
+
+### Adds HBase 2.5.11
+```bash
+wget https://dlcdn.apache.org/hbase/2.5.11/hbase-2.5.11-bin.tar.gz
+```
+- Extracted into `/opt/hbase`
+- Config file copied: `hbase-site.xml`
+
+### Additional Environment Variables
+```dockerfile
+HBASE_HOME=/opt/hbase
+PATH=$HBASE_HOME/bin:$PATH
+```
+
+### Entrypoint
+Uses the same bootstrap script: `hadoop_script.sh`
+
+---
+
+## 🧤 Final Notes
+
+- Multi-stage build minimizes image size and organizes layers.
+- This image is compatible with HA setups for Hadoop + HBase + Zookeeper.
+- SSH setup allows container-to-container remote command execution.
+
+---
 ---
 ## Compose
 ---
