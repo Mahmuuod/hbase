@@ -177,7 +177,6 @@ If `/opt/hadoop/name/current` exists, the script assumes prior formatting and di
 - Keeps containers alive with `tail -f /dev/null`
 
 ---
----
 ## Compose
 ---
 
@@ -212,6 +211,48 @@ If `/opt/hadoop/name/current` exists, the script assumes prior formatting and di
   - HBase 2.5.11
 - Each node is built from this custom image using multi-stage builds.
 - Docker Compose simulates a distributed environment with HA behavior.
+
+---
+
+
+# 🐝 HBase Configuration Documentation (`hbase-site.xml`)
+
+This file configures a distributed HBase setup running on top of an HA-enabled Hadoop cluster and coordinated via a ZooKeeper ensemble.
+
+---
+
+## 🔧 Key Configuration Properties
+
+### 📂 `hbase.rootdir`
+- **Value:** `hdfs://mycluster/hbase`
+- Specifies the root directory in HDFS where HBase stores its data.
+
+### 🌐 `hbase.cluster.distributed`
+- **Value:** `true`
+- Enables distributed HBase mode (as opposed to standalone/local mode).
+
+### 🧭 `hbase.zookeeper.quorum`
+- **Value:** `zk1,zk2,zk3`
+- Comma-separated list of ZooKeeper hosts managing cluster coordination.
+
+### 🔌 `hbase.zookeeper.property.clientPort`
+- **Value:** `2181`
+- Defines the port on which ZooKeeper listens for client connections.
+
+### 📜 `hbase.wal.provider`
+- **Value:** `filesystem`
+- Configures the Write-Ahead Log (WAL) provider to use the file system.
+
+### 🔁 `hbase.replication`
+- **Value:** `true`
+- Enables support for HBase replication between clusters.
+
+---
+
+## 📎 Notes
+
+- Ensure `/hbase` directory exists in HDFS and is accessible by the HBase user.
+- The `zk1`, `zk2`, and `zk3` hostnames must resolve inside the Docker network.
 
 ---
 
