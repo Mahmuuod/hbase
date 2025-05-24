@@ -29,6 +29,73 @@ This project demonstrates the design, deployment, and usage of a **Highly Availa
   - Docker Compose orchestrates a multi-container HA cluster deployment
 
 ---
+## Compose
+---
+
+## 📦 Cluster Components Overview
+
+### 🟩 Hadoop Masters
+
+- **Hadoop NameNodes**: Provide HDFS master services with High Availability enabled using JournalNodes.
+- **YARN ResourceManagers**: Handle job scheduling and resource allocation with HA failover support.
+
+### 🟨 HBase Masters
+
+- **HBase Master Nodes**: Two nodes configured for active/standby mode to provide fault-tolerant region management and metadata handling.
+
+### 🟦 ZooKeeper Nodes
+
+- **ZooKeeper Ensemble**: Three nodes forming a quorum to coordinate leader election and distributed synchronization for Hadoop and HBase.
+
+### 🟧 Workers
+
+- **HBase RegionServers**: Handle read/write operations for HBase tables and serve regions to clients.
+- **Hadoop DataNodes**: Store HDFS data blocks.
+- **YARN NodeManagers**: Manage containers and monitor resource usage on each worker node.
+
+---
+
+## 🐳 Containerization and Build Info
+
+- **Custom Docker Image**:
+  - Hadoop 3.3.6
+  - Zookeeper 3.8.4
+  - HBase 2.5.11
+- Each node is built from this custom image using multi-stage builds.
+- Docker Compose simulates a distributed environment with HA behavior.
+
+---
+
+## 🌐 Networking
+
+All services communicate over a custom Docker bridge network called `hadoop_cluster`, ensuring internal hostname resolution between containers.
+
+---
+
+## 🗃️ Persistent Volumes
+
+Named volumes are created for:
+
+- **NameNode directories** (`nn1`, `nn2`)
+- **Zookeeper data directories** (`zk1`, `zk2`, `zk3`)
+- **DataNode storage**
+- Additional persistent mounts for logs and code are bind-mounted from host
+
+---
+
+## 🚀 Running the Cluster
+
+```bash
+# Build the cluster images
+docker-compose build
+
+# Start all services
+docker-compose up -d
+
+# Monitor the state
+docker ps
+docker logs -f <service_name>
+```
 
 ## WebTable Use Case
 
