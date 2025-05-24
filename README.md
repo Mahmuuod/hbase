@@ -397,3 +397,85 @@ create 'webTable',
 
   ['0!', '1!', '2!', '3!', '4!', '5!', '6!', '7!', '8!', '9!', 'a!', 'b!', 'c!', 'd!', 'e!', 'f!']
 ```
+
+
+# 🧬 Web Crawler Ingest Script Documentation (`ingest.py`)
+
+This Python script simulates the ingestion of web content into an HBase table named `webTable`. It uses structured rowkeys and populates different column families (content, meta, outlinks, inlinks) to represent realistic web crawling behavior and relationships.
+
+---
+
+## 📦 Dependencies
+
+- `happybase`: Python client for Apache HBase
+- `hashlib`, `random`, `time`: Standard Python libraries
+
+---
+
+## 🔧 Configuration
+
+```python
+HBASE_HOST = 'localhost'
+TABLE_NAME = 'webTable'
+```
+
+- Connects to a local HBase instance.
+- Assumes the table `webTable` already exists with proper column families.
+
+---
+
+## 🔑 Rowkey Structure
+
+Rowkeys are generated using a salted reversed domain-based structure:
+```
+<salt>!<reversed.domain>/<path>
+```
+Example: `a0!com.example.www/about`
+
+The salt is a single hex character to evenly distribute writes across HBase regions.
+
+---
+
+## 📄 Functions
+
+### `get_rowkey(url)`
+- Converts a URL into a salted reversed rowkey.
+
+### `create_connection()`
+- Connects to HBase using `happybase.Connection`.
+
+### `ingest_sample_data(table)`
+- Inserts fixed sample pages and metadata with realistic fields such as `content:html`, `meta:fetch_time`, and `outlinks`.
+
+### `generate_website_data(table, domain, num_pages=5)`
+- Simulates a real site with `/`, `/page-1`, ..., and links between them.
+- Encodes link relationships via `inlinks` and `outlinks`.
+
+---
+
+## 🚀 Entry Point
+
+```python
+if __name__ == '__main__':
+    main()
+```
+
+- Ingests sample data
+- Simulates data for a set of major websites (Google, YouTube, etc.)
+
+---
+
+## 🧪 Use Case
+
+Useful for:
+- Demonstrating HBase table design for web crawlers
+- Benchmarking HBase read/write workloads
+- Teaching web graph modeling using key-value stores
+
+---
+
+## 👤 Author
+
+Created and maintained by **Mahmoud Osama**  
+_Data Engineer | Software Developer | Linux Enthusiast_
+
